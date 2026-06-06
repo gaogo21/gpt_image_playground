@@ -97,7 +97,7 @@ vi.mock('./lib/agentApi', () => ({
 }))
 import { clearAgentConversations, clearImages, clearTasks, getAllAgentConversations, getAllTasks, putAgentConversation, putImage, putTask as putDbTask } from './lib/db'
 import { callAgentResponsesApi, callBatchImageSingle } from './lib/agentApi'
-import { cleanStaleAgentInputDrafts, deleteAgentRoundFromConversation, deleteFavoriteCollection, editOutputs, getActiveAgentRounds, getErrorToastMessage, getPersistedState, getTaskApiProfile, importData, initStore, markInterruptedOpenAIRunningTasks, migratePersistedState, regenerateAgentAssistantMessage, remapAgentRoundMentionsForPathChange, removeTask, reuseConfig, submitAgentMessage, submitTask, useStore } from './store'
+import { cleanStaleAgentInputDrafts, clearFailedTasks, deleteAgentRoundFromConversation, deleteFavoriteCollection, editOutputs, getActiveAgentRounds, getErrorToastMessage, getPersistedState, getTaskApiProfile, importData, initStore, markInterruptedOpenAIRunningTasks, migratePersistedState, regenerateAgentAssistantMessage, remapAgentRoundMentionsForPathChange, removeTask, reuseConfig, submitAgentMessage, submitTask, useStore } from './store'
 
 const imageA = { id: 'image-a', dataUrl: 'data:image/png;base64,a' }
 const imageB = { id: 'image-b', dataUrl: 'data:image/png;base64,b' }
@@ -1431,6 +1431,25 @@ describe('agent context for removed outputs', () => {
     const serializedConversations = JSON.stringify(state.agentConversations)
     expect(serializedConversations).toContain('function_call_output')
     expect(serializedConversations).not.toContain('batch-deleted-base64')
+  })
+
+  it('clears only failed gallery tasks', async () => {
+    const failedA = task({ id: 'failed-a', status: 'error', error: '生成失败', outputImages: ['failed-image-a'] })
+    const failedB = task({ id: 'failed-b', status: 'error', error: '生成失败', outputImages: ['failed-image-b'] })
+    const done = task({ id: 'done-task', status: 'done', outputImages: ['done-image'] })
+    const running = task({ id: 'running-task', status: 'running', finishedAt: null, elapsed: null })
+    useStore.setState({
+      tasks: [failedA, done, failedB, running],
+      selectedTaskIds: ['failed-a', 'done-task', 'failed-b'],
+      showToast: vi.fn(),
+    })
+
+    await clearFailedTasks()
+
+    const state = useStore.getState()
+    expect(state.tasks.map((item) => item.id)).toEqual(['done-task', 'running-task'])
+    expect(state.selectedTaskIds).toEqual(['done-task'])
+    expect(state.showToast).toHaveBeenCalledWith('已删除 2 个任务', 'success')
   })
 })
 
