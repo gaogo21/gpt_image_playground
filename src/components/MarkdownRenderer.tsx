@@ -20,7 +20,7 @@ type MathMarkdownModule = {
 }
 type MarkdownRendererState =
   | { type: 'loading' }
-  | { type: 'modern'; Component: StreamdownComponent; math: MathMarkdownModule }
+  | { type: 'modern'; Component: StreamdownComponent; math: MathMarkdownModule | null }
   | { type: 'legacy'; module: LegacyMarkdownModule }
   | { type: 'plain' }
 
@@ -123,19 +123,30 @@ function loadLegacyMarkdown() {
 function loadMarkdownRenderer() {
   if (!canLoadStreamdown) return loadLegacyMarkdown()
 
-  streamdownPromise ??= Promise.all([
-    import('streamdown'),
-    import('@streamdown/math'),
-  ])
-    .then(([streamdown, math]) => ({
-      type: 'modern' as const,
-      Component: streamdown.Streamdown,
-      math: {
+  const loadMathPlugin = async (): Promise<MathMarkdownModule | null> => {
+    try {
+      const moduleId = '@streamdown/math'
+      const math = await import(/* @vite-ignore */ moduleId)
+      return {
         math: math.createMathPlugin({
           errorColor: 'var(--muted-foreground)',
           singleDollarTextMath: true,
         }),
-      },
+      }
+    } catch (error) {
+      console.warn('Optional math plugin failed to load:', error)
+      return null
+    }
+  }
+
+  streamdownPromise ??= Promise.all([
+    import('streamdown'),
+    loadMathPlugin(),
+  ])
+    .then(([streamdown, math]) => ({
+      type: 'modern' as const,
+      Component: streamdown.Streamdown,
+      math,
     }))
     .catch((error) => {
       console.error('Streamdown failed to load:', error)
@@ -211,7 +222,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
       lineNumbers={false}
       mode={streaming ? 'streaming' : 'static'}
       parseIncompleteMarkdown={streaming}
-      plugins={{ math: renderer.math.math }}
+      plugins={renderer.math ? { math: renderer.math.math } : undefined}
       skipHtml
       translations={translations}
       urlTransform={safeUrl}
