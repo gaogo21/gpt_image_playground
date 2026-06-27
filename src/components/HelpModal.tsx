@@ -88,10 +88,12 @@ export default function HelpModal({ appMode, isFavoriteCollectionOverview = fals
                 </h4>
                 <div className="space-y-4">
                   <ul className="list-disc pl-4 space-y-2">
-                    <li>在画布上拖拽平移，滚轮或触控板双指缩放。</li>
+                    <li>拖拽任务节点可手工排布，位置只保存在当前浏览器。</li>
+                    <li>在画布空白处拖拽平移，滚轮或触控板双指缩放。</li>
                     <li>每个任务块左侧是提示词，右侧是输出缩略图矩阵。</li>
                     <li>点击任务块可查看详情，现有历史、收藏和 Agent 入口保持不变。</li>
-                    <li>画布当前是只读视图，不支持拖动节点或手动连线。</li>
+                    <li><strong className="text-blue-500 dark:text-blue-400 font-medium">Reset layout</strong> 会清空本地位置覆盖层，回到自动谱系布局。</li>
+                    <li>画布不会改动任务内容、边关系或后端数据，也不支持手动连线。</li>
                   </ul>
                 </div>
               </section>
