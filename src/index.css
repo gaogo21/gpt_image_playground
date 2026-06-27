@@ -162,6 +162,46 @@ input[type="number"] {
   display: none;
 }
 
+.canvas-shell {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.16), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(99, 102, 241, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(4, 6, 12, 0.98), rgba(7, 9, 14, 0.96));
+}
+
+.canvas-shell-backdrop {
+  background:
+    radial-gradient(circle at top, rgba(15, 23, 42, 0.54), transparent 35%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.42));
+}
+
+.canvas-shell-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(circle at center, black 42%, transparent 100%);
+}
+
+.canvas-flow .react-flow__renderer,
+.canvas-flow .react-flow__viewport,
+.canvas-flow .react-flow__pane {
+  background: transparent !important;
+}
+
+.canvas-flow .react-flow__nodes {
+  filter: drop-shadow(0 22px 40px rgba(0, 0, 0, 0.24));
+}
+
+.canvas-flow .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.canvas-flow .react-flow__handle {
+  opacity: 0.75;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.7);
+}
+
 .markdown-renderer {
   color: inherit;
   line-height: inherit;

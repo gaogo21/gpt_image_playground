@@ -1205,6 +1205,52 @@ describe('agent draft lifecycle', () => {
     expect(state.inputImages).toEqual([imageB])
   })
 
+  it('accepts canvas mode without breaking gallery and agent mode switching', () => {
+    useStore.getState().setAppMode('canvas')
+    expect(useStore.getState().appMode).toBe('canvas')
+    useStore.getState().setAppMode('gallery')
+    expect(useStore.getState().appMode).toBe('gallery')
+    useStore.getState().setAppMode('agent')
+    expect(useStore.getState().appMode).toBe('agent')
+  })
+
+  it('preserves draft state while switching through canvas mode', () => {
+    useStore.setState({
+      settings: normalizeSettings({
+        ...DEFAULT_SETTINGS,
+        profiles: [responsesProfile],
+        activeProfileId: responsesProfile.id,
+      }),
+      appMode: 'gallery',
+      prompt: 'gallery draft',
+      inputImages: [imageB],
+      maskDraft: null,
+      maskEditorImageId: null,
+      galleryInputDraft: null,
+      agentConversations: [agentConversation({ id: 'conversation-a' })],
+      activeAgentConversationId: 'conversation-a',
+      agentInputDrafts: {
+        'conversation-a': {
+          prompt: 'agent draft',
+          inputImages: [imageA],
+          maskDraft: null,
+          maskEditorImageId: null,
+        },
+      },
+    })
+
+    useStore.getState().setAppMode('canvas')
+    expect(useStore.getState().appMode).toBe('canvas')
+    expect(useStore.getState().prompt).toBe('gallery draft')
+
+    useStore.getState().setAppMode('gallery')
+    expect(useStore.getState().prompt).toBe('gallery draft')
+
+    useStore.getState().setAppMode('agent')
+    expect(useStore.getState().appMode).toBe('agent')
+    expect(useStore.getState().prompt).toBe('agent draft')
+  })
+
   it('persists the gallery draft while agent mode is active', () => {
     const galleryPrompt = 'gallery draft'
     useStore.setState({
