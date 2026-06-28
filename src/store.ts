@@ -41,7 +41,7 @@ import {
   clearImages,
   storeImage,
 } from './lib/db'
-import { callImageApi } from './lib/api'
+import { callImageApi, type CallApiResult } from './lib/api'
 import { callAgentConversationTitleApi, callAgentResponsesApi, callBatchImageSingle, parseBatchImageCallArguments, type AgentApiResultImage } from './lib/agentApi'
 import { collectAgentRoundOutputImageSlots, extractAgentReferenceIds, getAgentCurrentReferenceId, getAgentGeneratedImageReferenceId, replaceAgentPromptImageReferencesForApi } from './lib/agentImageReferences'
 import { showBrowserNotification } from './lib/browserNotification'
@@ -2817,6 +2817,42 @@ async function storeTaskOutputImages(task: TaskRecord, images: string[]) {
   }
 }
 
+async function storeTaskOutputVideos(videos: NonNullable<CallApiResult['videos']>) {
+  const outputIds: string[] = []
+  const storedImageIds: string[] = []
+  let videoMetadata: { duration: number; aspectRatio: string; url?: string } | undefined
+
+  try {
+    for (const video of videos) {
+      // 存储视频缩略图（作为图片存储）
+      const thumbnailId = await storeImage(video.thumbnailDataUrl, 'generated')
+      storedImageIds.push(thumbnailId)
+      cacheImage(thumbnailId, video.thumbnailDataUrl)
+      outputIds.push(thumbnailId)
+
+      // 保存视频元数据（只保存第一个视频的）
+      if (!videoMetadata) {
+        videoMetadata = {
+          duration: video.duration,
+          aspectRatio: video.aspectRatio,
+          url: video.url,
+        }
+      }
+
+      // TODO: 考虑存储完整视频到 IndexedDB（如果需要）
+      // 目前只存缩略图，完整视频可以通过 URL 重新下载
+    }
+
+    return {
+      outputIds,
+      videoMetadata,
+    }
+  } catch (err) {
+    await deleteUnreferencedImageIds(storedImageIds)
+    throw err
+  }
+}
+
 async function deleteUnreferencedImageIds(imageIds: Iterable<string>) {
   const candidates = Array.from(new Set(Array.from(imageIds).filter(Boolean)))
   if (candidates.length === 0) return
@@ -4199,12 +4235,30 @@ async function executeTask(taskId: string) {
       return
     }
 
-    // 存储输出图片
-    const { outputIds, outputDataUrls, transparentOriginalImageIds } = await storeTaskOutputImages(task, result.images)
+    // 检查是否为视频任务
+    const isVideoTask = result.videos && result.videos.length > 0
+
+    // 存储输出（图片或视频）
+    let outputIds: string[]
+    let outputDataUrls: string[] = []
+    let transparentOriginalImageIds: string[] | undefined
+    let videoMetadata: { duration: number; aspectRatio: string; url?: string } | undefined
+
+    if (isVideoTask) {
+      const videoResult = await storeTaskOutputVideos(result.videos!)
+      outputIds = videoResult.outputIds
+      videoMetadata = videoResult.videoMetadata
+    } else {
+      const imageResult = await storeTaskOutputImages(task, result.images)
+      outputIds = imageResult.outputIds
+      outputDataUrls = imageResult.outputDataUrls
+      transparentOriginalImageIds = imageResult.transparentOriginalImageIds
+    }
+
     const isAsyncCustomTask = taskProvider !== 'fal' && taskProvider !== 'openai' && Boolean(customTaskInfo)
     const actualParamsList = taskProvider === 'fal'
       ? await resolveImageSizeParamsList(outputDataUrls, result.actualParamsList)
-      : isAsyncCustomTask
+      : isAsyncCustomTask && !isVideoTask
       ? await readImageSizeParamsList(outputDataUrls)
       : result.actualParamsList
     const actualParams = (() => {
@@ -4254,15 +4308,22 @@ async function executeTask(taskId: string) {
       elapsed: Date.now() - task.createdAt,
       falRecoverable: false,
       customRecoverable: false,
+      // 视频相关字段
+      mediaType: isVideoTask ? 'video' : 'image',
+      videoDuration: videoMetadata?.duration,
+      videoAspectRatio: videoMetadata?.aspectRatio,
+      videoUrl: videoMetadata?.url,
     })
     void deleteUnreferencedImageIds(partialImageIdsToClean)
 
     const failedCount = result.failedRequests?.length ?? 0
+    const mediaLabel = isVideoTask ? '视频' : '图片'
     const completionMessage = failedCount > 0
-      ? `生成完成：成功 ${outputIds.length} 张，失败 ${failedCount} 张`
-      : `生成完成，共 ${outputIds.length} 张图片`
+      ? `生成完成：成功 ${outputIds.length} 个，失败 ${failedCount} 个`
+      : `生成完成，共 ${outputIds.length} 个${mediaLabel}`
     useStore.getState().showToast(completionMessage, failedCount > 0 ? 'error' : 'success')
-    if (!isAgentTask(task)) showTaskCompletionNotification('图像生成完成', `${completionMessage}。`)
+    const notificationTitle = isVideoTask ? '视频生成完成' : '图像生成完成'
+    if (!isAgentTask(task)) showTaskCompletionNotification(notificationTitle, `${completionMessage}。`)
     const currentMask = useStore.getState().maskDraft
     if (
       maskDataUrl &&
