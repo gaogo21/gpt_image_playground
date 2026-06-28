@@ -808,7 +808,37 @@ export const DEFAULT_SETTINGS: AppSettings = normalizeSettings({
   apiProxy: DEFAULT_OPENAI_API_PROXY,
   streamImages: false,
   streamPartialImages: DEFAULT_STREAM_PARTIAL_IMAGES,
-  customProviders: [],
+  customProviders: [
+    {
+      id: 'video-ds-2.0',
+      name: '视频生成 DS 2.0',
+      template: 'http-video',
+      submit: {
+        path: '/v1/videos',
+        method: 'POST',
+        contentType: 'json',
+        body: {
+          model: 'video-ds-2.0-fast',
+          prompt: '{{prompt}}',
+          seconds: 15,
+          aspect_ratio: '9:16',
+        },
+        taskIdPath: 'task_id',
+      },
+      poll: {
+        path: '/v1/videos/{{task_id}}',
+        method: 'GET',
+        intervalSeconds: 5,
+        statusPath: 'status',
+        successValues: ['completed', 'succeeded', 'done'],
+        failureValues: ['failed', 'error'],
+        errorPath: 'error',
+        result: {
+          videoUrlPaths: ['video_url', 'url', 'data.url'],
+        },
+      },
+    },
+  ],
   clearInputAfterSubmit: false,
   persistInputOnRestart: true,
   reuseTaskApiProfileTemporarily: false,
