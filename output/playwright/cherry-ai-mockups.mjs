@@ -1,32 +1,462 @@
-<!doctype html>
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { execFileSync } from 'node:child_process'
+
+const ROOT = '/Users/ming/project/image/output/playwright'
+const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+
+const A = {
+  id: 'scheme-a',
+  label: 'A',
+  title: '深色工作台',
+  subtitle: 'Infinite canvas / network-first',
+  bg: '#05070d',
+  bg2: '#090d16',
+  bg3: '#0d1322',
+  surface: 'rgba(12, 15, 22, 0.92)',
+  surface2: 'rgba(18, 22, 31, 0.96)',
+  surface3: 'rgba(255,255,255,0.06)',
+  line: 'rgba(171, 202, 255, 0.10)',
+  text: '#f4f7ff',
+  muted: '#8d97ad',
+  muted2: '#667188',
+  accent: '#39d2ff',
+  accent2: '#8a6cff',
+  accent3: '#ff4fa1',
+  chip: 'rgba(255,255,255,0.06)',
+  chipBorder: 'rgba(255,255,255,0.10)',
+  glow: 'rgba(57, 210, 255, 0.20)',
+  canvasGlow: 'rgba(46, 128, 255, 0.22)',
+}
+
+const B = {
+  id: 'scheme-b',
+  label: 'B',
+  title: '轻简视图',
+  subtitle: 'Airier canvas / quieter hierarchy',
+  bg: '#edf1f7',
+  bg2: '#f5f7fb',
+  bg3: '#ffffff',
+  surface: 'rgba(255, 255, 255, 0.76)',
+  surface2: 'rgba(255, 255, 255, 0.90)',
+  surface3: 'rgba(15, 23, 42, 0.05)',
+  line: 'rgba(15, 23, 42, 0.10)',
+  text: '#101828',
+  muted: '#5d6b82',
+  muted2: '#7c8798',
+  accent: '#2f7cff',
+  accent2: '#6a79ff',
+  accent3: '#0f9d8c',
+  chip: 'rgba(15, 23, 42, 0.04)',
+  chipBorder: 'rgba(15, 23, 42, 0.08)',
+  glow: 'rgba(47, 124, 255, 0.14)',
+  canvasGlow: 'rgba(47, 124, 255, 0.10)',
+}
+
+const OUTPUTS = [
+  { title: '输出 01', ratio: '1:1', tone: 'blue' },
+  { title: '输出 02', ratio: '4:5', tone: 'violet' },
+  { title: '输出 03', ratio: '16:9', tone: 'pink' },
+]
+
+const A_CARDS = [
+  {
+    className: 'panel panel-rail',
+    style: 'left: 72px; top: 150px; width: 350px; height: 615px;',
+    title: '任务输入',
+    eyebrow: 'PROMPT RAIL',
+    body: '生成未来的赛博朋克画面，带人物、城市反光、稀疏霓虹，像一张被精密组织过的视觉网络。',
+    meta: [
+      ['来源', '参考图 + 文本'],
+      ['风格', '深色高对比'],
+      ['输出', '3 张'],
+    ],
+    footer: ['参考图 02', '约束强', '可追踪'],
+  },
+  {
+    className: 'panel panel-core panel-selected',
+    style: 'left: 505px; top: 140px; width: 575px; height: 350px;',
+    title: '关系图谱',
+    eyebrow: 'CANVAS CORE',
+    body: '节点按层级展开，主任务、参考图、分支结果和细化输出通过连线形成稳定的阅读路径。',
+    meta: [
+      ['节点', '12'],
+      ['连线', '18'],
+      ['选中', '1'],
+    ],
+    footer: ['层级强', '连线密', '可拖拽'],
+  },
+  {
+    className: 'panel panel-inspector',
+    style: 'left: 1128px; top: 120px; width: 340px; height: 248px;',
+    title: '输出详情',
+    eyebrow: 'DETAIL INSPECTOR',
+    body: '选中卡片拉高、放大、发光，作为视觉锚点，让用户一眼知道当前焦点。',
+    meta: [
+      ['状态', '完成'],
+      ['时长', '01:16'],
+    ],
+    footer: ['强锚点', '浮层卡片'],
+  },
+  {
+    className: 'panel panel-bottom',
+    style: 'left: 865px; top: 502px; width: 480px; height: 220px;',
+    title: '输出队列',
+    eyebrow: 'OUTPUT QUEUE',
+    body: '底部保持低饱和信息条，辅助查看批量输出但不抢占主视觉。',
+    meta: [
+      ['第 1 轮', '3 张'],
+      ['筛选', '未应用'],
+      ['复用', '可用'],
+    ],
+    footer: ['轻提示', '不打断', '可继续'],
+  },
+]
+
+const B_CARDS = [
+  {
+    className: 'panel panel-rail',
+    style: 'left: 82px; top: 160px; width: 330px; height: 565px;',
+    title: '任务输入',
+    eyebrow: 'INPUT',
+    body: '同样的任务信息，用更轻的层级组织，突出阅读感而不是控制感。',
+    meta: [
+      ['来源', '参考图'],
+      ['风格', '浅底克制'],
+      ['输出', '3 张'],
+    ],
+    footer: ['更轻', '更留白', '更直观'],
+  },
+  {
+    className: 'panel panel-core',
+    style: 'left: 500px; top: 170px; width: 520px; height: 300px;',
+    title: '任务视图',
+    eyebrow: 'CANVAS',
+    body: '把任务、素材和结果压缩成更简单的阅读结构，降低初次进入的压迫感。',
+    meta: [
+      ['节点', '7'],
+      ['连线', '8'],
+      ['选中', '1'],
+    ],
+    footer: ['简化', '低噪声', '清爽'],
+  },
+  {
+    className: 'panel panel-inspector',
+    style: 'left: 1058px; top: 170px; width: 390px; height: 300px;',
+    title: '摘要信息',
+    eyebrow: 'SUMMARY',
+    body: '右侧卡片更像一个摘要面板，强调状态与结果，而不是控制细节。',
+    meta: [
+      ['状态', '完成'],
+      ['时间', '01:16'],
+      ['质量', '稳定'],
+    ],
+    footer: ['更直白', '更像文档', '更少装饰'],
+  },
+]
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+}
+
+function themeCss(theme, compare = false) {
+  return `
+    :root {
+      --bg: ${theme.bg};
+      --bg2: ${theme.bg2};
+      --bg3: ${theme.bg3};
+      --surface: ${theme.surface};
+      --surface2: ${theme.surface2};
+      --surface3: ${theme.surface3};
+      --line: ${theme.line};
+      --text: ${theme.text};
+      --muted: ${theme.muted};
+      --muted2: ${theme.muted2};
+      --accent: ${theme.accent};
+      --accent2: ${theme.accent2};
+      --accent3: ${theme.accent3};
+      --chip: ${theme.chip};
+      --chip-border: ${theme.chipBorder};
+      --glow: ${theme.glow};
+      --canvas-glow: ${theme.canvasGlow};
+      --scale: ${compare ? '0.64' : '1'};
+    }
+  `
+}
+
+function renderMeta(meta) {
+  return meta
+    .map(([key, value]) => `
+      <div class="meta-box">
+        <div class="meta-k">${escapeHtml(key)}</div>
+        <div class="meta-v">${escapeHtml(value)}</div>
+      </div>
+    `)
+    .join('')
+}
+
+function renderFooterChips(chips, accent = false) {
+  return chips
+    .map((chip, index) => `
+      <span class="chip ${accent && index === 0 ? 'chip-strong' : ''}">${escapeHtml(chip)}</span>
+    `)
+    .join('')
+}
+
+function renderOutputs(theme, compact = false) {
+  return OUTPUTS.map((output, index) => `
+    <article class="output-card output-${output.tone}" style="animation-delay:${index * 0.08}s">
+      <div class="output-index">${index + 1}</div>
+      <div class="output-copy">
+        <div class="output-title">${escapeHtml(output.title)}</div>
+        <div class="output-ratio">${escapeHtml(output.ratio)}</div>
+      </div>
+      <div class="output-preview">
+        <span class="output-dot"></span>
+        <span class="output-line"></span>
+      </div>
+    </article>
+  `).join('')
+}
+
+function renderLinks(theme, variant) {
+  if (variant === 'a') {
+    return `
+      <svg class="links" viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <filter id="linkGlowA" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
+        </defs>
+        <path d="M420 360 C560 300 628 286 742 282" />
+        <path d="M762 302 C858 316 936 326 1102 260" />
+        <path d="M848 478 C920 540 1002 548 1080 526" />
+        <path d="M628 556 C700 640 804 662 882 638" />
+        <path d="M450 238 C526 196 604 190 704 218" />
+        <circle cx="420" cy="360" r="5" />
+        <circle cx="742" cy="282" r="6" />
+        <circle cx="1102" cy="260" r="5" />
+        <circle cx="848" cy="478" r="5" />
+        <circle cx="1080" cy="526" r="5" />
+        <circle cx="628" cy="556" r="5" />
+        <circle cx="882" cy="638" r="5" />
+      </svg>
+    `
+  }
+
+  return `
+    <svg class="links links-light" viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <filter id="linkGlowB" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="3" />
+        </filter>
+      </defs>
+      <path d="M410 366 C545 316 624 308 744 300" />
+      <path d="M732 300 C836 300 940 302 1092 270" />
+      <path d="M640 534 C730 600 814 600 902 580" />
+      <path d="M520 246 C602 214 682 214 764 244" />
+      <circle cx="410" cy="366" r="4" />
+      <circle cx="744" cy="300" r="5" />
+      <circle cx="1092" cy="270" r="4" />
+      <circle cx="640" cy="534" r="4" />
+      <circle cx="902" cy="580" r="4" />
+    </svg>
+  `
+}
+
+function renderCard(card, theme, variant) {
+  const smallCard = card.className.includes('panel-bottom') || card.className.includes('panel-inspector')
+  return `
+    <section class="${card.className}" style="${card.style}">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow">${escapeHtml(card.eyebrow)}</div>
+          <h2>${escapeHtml(card.title)}</h2>
+        </div>
+        <div class="badge">${variant === 'a' ? '深色' : '轻简'}</div>
+      </div>
+      <p class="panel-body">${escapeHtml(card.body)}</p>
+      <div class="meta-grid ${smallCard ? 'meta-grid-tight' : ''}">
+        ${renderMeta(card.meta)}
+      </div>
+      <div class="chip-row ${smallCard ? 'chip-row-tight' : ''}">
+        ${renderFooterChips(card.footer, card.className.includes('panel-selected'))}
+      </div>
+    </section>
+  `
+}
+
+function renderNodes(variant) {
+  if (variant === 'a') {
+    return `
+      <div class="node node-main">
+        <div class="node-top">
+          <span class="node-id">01</span>
+          <span class="node-tag">主任务</span>
+        </div>
+        <div class="node-title">生成未来的赛博朋克画面</div>
+        <div class="node-sub">人物 + 城市反光 + 霓虹</div>
+      </div>
+      <div class="node node-secondary">
+        <div class="node-top">
+          <span class="node-id">02</span>
+          <span class="node-tag">参考图</span>
+        </div>
+        <div class="node-title">语义约束</div>
+        <div class="node-sub">高层级、强对比、稀疏高亮</div>
+      </div>
+      <div class="node node-tertiary">
+        <div class="node-top">
+          <span class="node-id">03</span>
+          <span class="node-tag">输出</span>
+        </div>
+        <div class="node-title">3 张候选</div>
+        <div class="node-sub">保留多样性</div>
+      </div>
+      <div class="node node-pulse">
+        <div class="node-top">
+          <span class="node-id">04</span>
+          <span class="node-tag">选中</span>
+        </div>
+        <div class="node-title">发光锚点</div>
+        <div class="node-sub">当前焦点高亮</div>
+      </div>
+    `
+  }
+
+  return `
+    <div class="node node-main node-light">
+      <div class="node-top">
+        <span class="node-id">01</span>
+        <span class="node-tag">任务</span>
+      </div>
+      <div class="node-title">生成未来的赛博朋克画面</div>
+      <div class="node-sub">更直白的阅读顺序</div>
+    </div>
+    <div class="node node-secondary node-light">
+      <div class="node-top">
+        <span class="node-id">02</span>
+        <span class="node-tag">输入</span>
+      </div>
+      <div class="node-title">参考图</div>
+      <div class="node-sub">必要信息保留</div>
+    </div>
+    <div class="node node-tertiary node-light">
+      <div class="node-top">
+        <span class="node-id">03</span>
+        <span class="node-tag">结果</span>
+      </div>
+      <div class="node-title">3 张候选</div>
+      <div class="node-sub">轻量摘要</div>
+    </div>
+  `
+}
+
+function renderScene(theme, variant) {
+  const cards = variant === 'a' ? A_CARDS : B_CARDS
+  return `
+    <div class="frame">
+      <div class="ambient ambient-1"></div>
+      <div class="ambient ambient-2"></div>
+      <div class="ambient ambient-3"></div>
+      <div class="grid"></div>
+      <div class="topbar">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <div>
+            <div class="brand-title">Cherry AI</div>
+            <div class="brand-sub">${escapeHtml(theme.subtitle)}</div>
+          </div>
+        </div>
+        <div class="topbar-meta">
+          <span class="top-chip">${escapeHtml(theme.label)} · ${escapeHtml(theme.title)}</span>
+          <span class="top-chip">${variant === 'a' ? '关系网优先' : '阅读感优先'}</span>
+        </div>
+      </div>
+      <div class="workspace">
+        ${renderLinks(theme, variant)}
+        <div class="canvas-title">
+          <div class="canvas-eyebrow">INFINITE CANVAS</div>
+          <div class="canvas-heading">${variant === 'a' ? '深色无限画布' : '轻简无限画布'}</div>
+          <div class="canvas-copy">${variant === 'a'
+            ? '更像一张夜色中的调度台：黑、密、亮点少，但每个节点都有明确归属。'
+            : '更像一张被抬亮的工作画布：少一点压迫，多一点留白，信息可以更快扫读。'}</div>
+        </div>
+        <div class="node-cluster">
+          ${renderNodes(variant)}
+        </div>
+        ${cards.map((card) => renderCard(card, theme, variant)).join('')}
+        <div class="floating-pills ${variant === 'a' ? '' : 'floating-pills-light'}">
+          <span class="float-pill">拖拽排布</span>
+          <span class="float-pill">连接关系</span>
+          <span class="float-pill">输出分组</span>
+          <span class="float-pill">无限延展</span>
+        </div>
+        <div class="output-rail">
+          ${renderOutputs(theme)}
+        </div>
+        <div class="edge-hint edge-left"></div>
+        <div class="edge-hint edge-right"></div>
+      </div>
+    </div>
+  `
+}
+
+function renderCompareScene(theme, variant, caption) {
+  return `
+    <section class="compare-panel compare-panel-${variant}">
+      <div class="compare-caption">
+        <div>
+          <div class="compare-label">${caption}</div>
+          <div class="compare-sub">${variant === 'a'
+            ? '深色、浮层、连线更强'
+            : '更轻、更简、更留白'}</div>
+        </div>
+        <div class="compare-mini">${variant === 'a' ? '推荐方向' : '对照方案'}</div>
+      </div>
+      <div class="compare-viewport">
+        <img class="compare-image" src="./cherry-ai-scheme-${variant}.png" alt="${caption}" />
+      </div>
+      <div class="compare-footer">
+        ${variant === 'a'
+          ? '<span class="compare-chip compare-chip-strong">深色工作台</span><span class="compare-chip">关系连线</span><span class="compare-chip">高层级</span>'
+          : '<span class="compare-chip compare-chip-soft">轻简视图</span><span class="compare-chip">低噪声</span><span class="compare-chip">更留白</span>'}
+      </div>
+    </section>
+  `
+}
+
+function renderHtml(theme, variant, compare = false) {
+  const scene = compare
+    ? `
+      <main class="compare-shell">
+        <header class="compare-header">
+          <div>
+            <div class="compare-overline">A / B 比较</div>
+            <h1 class="compare-title">选择最终视觉方向</h1>
+          </div>
+          <div class="compare-note">左侧更推荐，右侧作为简洁对照</div>
+        </header>
+        ${renderCompareScene(A, 'a', 'A / 深色工作台')}
+        ${renderCompareScene(B, 'b', 'B / 轻简视图')}
+      </main>
+    `
+    : renderScene(theme, variant)
+
+  const pageClass = compare ? 'page page-compare' : `page page-${theme.id}`
+
+  return `<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>scheme-a mockup</title>
+  <title>${compare ? 'cherry-ai compare' : `${theme.id} mockup`}</title>
   <style>
-    
-    :root {
-      --bg: #05070d;
-      --bg2: #090d16;
-      --bg3: #0d1322;
-      --surface: rgba(12, 15, 22, 0.92);
-      --surface2: rgba(18, 22, 31, 0.96);
-      --surface3: rgba(255,255,255,0.06);
-      --line: rgba(171, 202, 255, 0.10);
-      --text: #f4f7ff;
-      --muted: #8d97ad;
-      --muted2: #667188;
-      --accent: #39d2ff;
-      --accent2: #8a6cff;
-      --accent3: #ff4fa1;
-      --chip: rgba(255,255,255,0.06);
-      --chip-border: rgba(255,255,255,0.10);
-      --glow: rgba(57, 210, 255, 0.20);
-      --canvas-glow: rgba(46, 128, 255, 0.22);
-      --scale: 1;
-    }
-  
+    ${themeCss(theme, compare)}
     * { box-sizing: border-box; }
     html, body {
       width: 100%;
@@ -724,284 +1154,50 @@
     }
   </style>
 </head>
-<body class="page page-scheme-a">
-  
-    <div class="frame">
-      <div class="ambient ambient-1"></div>
-      <div class="ambient ambient-2"></div>
-      <div class="ambient ambient-3"></div>
-      <div class="grid"></div>
-      <div class="topbar">
-        <div class="brand">
-          <div class="brand-mark"></div>
-          <div>
-            <div class="brand-title">Cherry AI</div>
-            <div class="brand-sub">Infinite canvas / network-first</div>
-          </div>
-        </div>
-        <div class="topbar-meta">
-          <span class="top-chip">A · 深色工作台</span>
-          <span class="top-chip">关系网优先</span>
-        </div>
-      </div>
-      <div class="workspace">
-        
-      <svg class="links" viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <filter id="linkGlowA" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="5" />
-          </filter>
-        </defs>
-        <path d="M420 360 C560 300 628 286 742 282" />
-        <path d="M762 302 C858 316 936 326 1102 260" />
-        <path d="M848 478 C920 540 1002 548 1080 526" />
-        <path d="M628 556 C700 640 804 662 882 638" />
-        <path d="M450 238 C526 196 604 190 704 218" />
-        <circle cx="420" cy="360" r="5" />
-        <circle cx="742" cy="282" r="6" />
-        <circle cx="1102" cy="260" r="5" />
-        <circle cx="848" cy="478" r="5" />
-        <circle cx="1080" cy="526" r="5" />
-        <circle cx="628" cy="556" r="5" />
-        <circle cx="882" cy="638" r="5" />
-      </svg>
-    
-        <div class="canvas-title">
-          <div class="canvas-eyebrow">INFINITE CANVAS</div>
-          <div class="canvas-heading">深色无限画布</div>
-          <div class="canvas-copy">更像一张夜色中的调度台：黑、密、亮点少，但每个节点都有明确归属。</div>
-        </div>
-        <div class="node-cluster">
-          
-      <div class="node node-main">
-        <div class="node-top">
-          <span class="node-id">01</span>
-          <span class="node-tag">主任务</span>
-        </div>
-        <div class="node-title">生成未来的赛博朋克画面</div>
-        <div class="node-sub">人物 + 城市反光 + 霓虹</div>
-      </div>
-      <div class="node node-secondary">
-        <div class="node-top">
-          <span class="node-id">02</span>
-          <span class="node-tag">参考图</span>
-        </div>
-        <div class="node-title">语义约束</div>
-        <div class="node-sub">高层级、强对比、稀疏高亮</div>
-      </div>
-      <div class="node node-tertiary">
-        <div class="node-top">
-          <span class="node-id">03</span>
-          <span class="node-tag">输出</span>
-        </div>
-        <div class="node-title">3 张候选</div>
-        <div class="node-sub">保留多样性</div>
-      </div>
-      <div class="node node-pulse">
-        <div class="node-top">
-          <span class="node-id">04</span>
-          <span class="node-tag">选中</span>
-        </div>
-        <div class="node-title">发光锚点</div>
-        <div class="node-sub">当前焦点高亮</div>
-      </div>
-    
-        </div>
-        
-    <section class="panel panel-rail" style="left: 72px; top: 150px; width: 350px; height: 615px;">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">PROMPT RAIL</div>
-          <h2>任务输入</h2>
-        </div>
-        <div class="badge">深色</div>
-      </div>
-      <p class="panel-body">生成未来的赛博朋克画面，带人物、城市反光、稀疏霓虹，像一张被精密组织过的视觉网络。</p>
-      <div class="meta-grid ">
-        
-      <div class="meta-box">
-        <div class="meta-k">来源</div>
-        <div class="meta-v">参考图 + 文本</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">风格</div>
-        <div class="meta-v">深色高对比</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">输出</div>
-        <div class="meta-v">3 张</div>
-      </div>
-    
-      </div>
-      <div class="chip-row ">
-        
-      <span class="chip ">参考图 02</span>
-    
-      <span class="chip ">约束强</span>
-    
-      <span class="chip ">可追踪</span>
-    
-      </div>
-    </section>
-  
-    <section class="panel panel-core panel-selected" style="left: 505px; top: 140px; width: 575px; height: 350px;">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">CANVAS CORE</div>
-          <h2>关系图谱</h2>
-        </div>
-        <div class="badge">深色</div>
-      </div>
-      <p class="panel-body">节点按层级展开，主任务、参考图、分支结果和细化输出通过连线形成稳定的阅读路径。</p>
-      <div class="meta-grid ">
-        
-      <div class="meta-box">
-        <div class="meta-k">节点</div>
-        <div class="meta-v">12</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">连线</div>
-        <div class="meta-v">18</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">选中</div>
-        <div class="meta-v">1</div>
-      </div>
-    
-      </div>
-      <div class="chip-row ">
-        
-      <span class="chip chip-strong">层级强</span>
-    
-      <span class="chip ">连线密</span>
-    
-      <span class="chip ">可拖拽</span>
-    
-      </div>
-    </section>
-  
-    <section class="panel panel-inspector" style="left: 1128px; top: 120px; width: 340px; height: 248px;">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">DETAIL INSPECTOR</div>
-          <h2>输出详情</h2>
-        </div>
-        <div class="badge">深色</div>
-      </div>
-      <p class="panel-body">选中卡片拉高、放大、发光，作为视觉锚点，让用户一眼知道当前焦点。</p>
-      <div class="meta-grid meta-grid-tight">
-        
-      <div class="meta-box">
-        <div class="meta-k">状态</div>
-        <div class="meta-v">完成</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">时长</div>
-        <div class="meta-v">01:16</div>
-      </div>
-    
-      </div>
-      <div class="chip-row chip-row-tight">
-        
-      <span class="chip ">强锚点</span>
-    
-      <span class="chip ">浮层卡片</span>
-    
-      </div>
-    </section>
-  
-    <section class="panel panel-bottom" style="left: 865px; top: 502px; width: 480px; height: 220px;">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">OUTPUT QUEUE</div>
-          <h2>输出队列</h2>
-        </div>
-        <div class="badge">深色</div>
-      </div>
-      <p class="panel-body">底部保持低饱和信息条，辅助查看批量输出但不抢占主视觉。</p>
-      <div class="meta-grid meta-grid-tight">
-        
-      <div class="meta-box">
-        <div class="meta-k">第 1 轮</div>
-        <div class="meta-v">3 张</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">筛选</div>
-        <div class="meta-v">未应用</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">复用</div>
-        <div class="meta-v">可用</div>
-      </div>
-    
-      </div>
-      <div class="chip-row chip-row-tight">
-        
-      <span class="chip ">轻提示</span>
-    
-      <span class="chip ">不打断</span>
-    
-      <span class="chip ">可继续</span>
-    
-      </div>
-    </section>
-  
-        <div class="floating-pills ">
-          <span class="float-pill">拖拽排布</span>
-          <span class="float-pill">连接关系</span>
-          <span class="float-pill">输出分组</span>
-          <span class="float-pill">无限延展</span>
-        </div>
-        <div class="output-rail">
-          
-    <article class="output-card output-blue" style="animation-delay:0s">
-      <div class="output-index">1</div>
-      <div class="output-copy">
-        <div class="output-title">输出 01</div>
-        <div class="output-ratio">1:1</div>
-      </div>
-      <div class="output-preview">
-        <span class="output-dot"></span>
-        <span class="output-line"></span>
-      </div>
-    </article>
-  
-    <article class="output-card output-violet" style="animation-delay:0.08s">
-      <div class="output-index">2</div>
-      <div class="output-copy">
-        <div class="output-title">输出 02</div>
-        <div class="output-ratio">4:5</div>
-      </div>
-      <div class="output-preview">
-        <span class="output-dot"></span>
-        <span class="output-line"></span>
-      </div>
-    </article>
-  
-    <article class="output-card output-pink" style="animation-delay:0.16s">
-      <div class="output-index">3</div>
-      <div class="output-copy">
-        <div class="output-title">输出 03</div>
-        <div class="output-ratio">16:9</div>
-      </div>
-      <div class="output-preview">
-        <span class="output-dot"></span>
-        <span class="output-line"></span>
-      </div>
-    </article>
-  
-        </div>
-        <div class="edge-hint edge-left"></div>
-        <div class="edge-hint edge-right"></div>
-      </div>
-    </div>
-  
+<body class="${pageClass}">
+  ${scene}
 </body>
-</html>
+</html>`
+}
+
+async function writePage(name, html) {
+  const htmlPath = path.join(ROOT, `${name}.html`)
+  await fs.writeFile(htmlPath, html, 'utf8')
+  return htmlPath
+}
+
+function capture(htmlPath, pngPath, width, height) {
+  execFileSync(CHROME, [
+    '--headless',
+    '--disable-gpu',
+    '--hide-scrollbars',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--allow-file-access-from-files',
+    '--virtual-time-budget=1200',
+    `--window-size=${width},${height}`,
+    `--screenshot=${pngPath}`,
+    `file://${htmlPath}`,
+  ], { stdio: 'pipe' })
+}
+
+async function main() {
+  await fs.mkdir(ROOT, { recursive: true })
+
+  const pages = [
+    { name: 'cherry-ai-scheme-a', html: renderHtml(A, 'a', false), width: 1600, height: 1000 },
+    { name: 'cherry-ai-scheme-b', html: renderHtml(B, 'b', false), width: 1600, height: 1000 },
+    { name: 'cherry-ai-compare', html: renderHtml(A, 'a', true), width: 2320, height: 1320 },
+  ]
+
+  for (const page of pages) {
+    const htmlPath = await writePage(page.name, page.html)
+    const pngPath = path.join(ROOT, `${page.name}.png`)
+    capture(htmlPath, pngPath, page.width, page.height)
+  }
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>scheme-a mockup</title>
+  <title>cherry-ai compare</title>
   <style>
     
     :root {
@@ -24,7 +24,7 @@
       --chip-border: rgba(255,255,255,0.10);
       --glow: rgba(57, 210, 255, 0.20);
       --canvas-glow: rgba(46, 128, 255, 0.22);
-      --scale: 1;
+      --scale: 0.64;
     }
   
     * { box-sizing: border-box; }
@@ -724,284 +724,51 @@
     }
   </style>
 </head>
-<body class="page page-scheme-a">
+<body class="page page-compare">
   
-    <div class="frame">
-      <div class="ambient ambient-1"></div>
-      <div class="ambient ambient-2"></div>
-      <div class="ambient ambient-3"></div>
-      <div class="grid"></div>
-      <div class="topbar">
-        <div class="brand">
-          <div class="brand-mark"></div>
+      <main class="compare-shell">
+        <header class="compare-header">
           <div>
-            <div class="brand-title">Cherry AI</div>
-            <div class="brand-sub">Infinite canvas / network-first</div>
+            <div class="compare-overline">A / B 比较</div>
+            <h1 class="compare-title">选择最终视觉方向</h1>
           </div>
-        </div>
-        <div class="topbar-meta">
-          <span class="top-chip">A · 深色工作台</span>
-          <span class="top-chip">关系网优先</span>
-        </div>
-      </div>
-      <div class="workspace">
+          <div class="compare-note">左侧更推荐，右侧作为简洁对照</div>
+        </header>
         
-      <svg class="links" viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <filter id="linkGlowA" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="5" />
-          </filter>
-        </defs>
-        <path d="M420 360 C560 300 628 286 742 282" />
-        <path d="M762 302 C858 316 936 326 1102 260" />
-        <path d="M848 478 C920 540 1002 548 1080 526" />
-        <path d="M628 556 C700 640 804 662 882 638" />
-        <path d="M450 238 C526 196 604 190 704 218" />
-        <circle cx="420" cy="360" r="5" />
-        <circle cx="742" cy="282" r="6" />
-        <circle cx="1102" cy="260" r="5" />
-        <circle cx="848" cy="478" r="5" />
-        <circle cx="1080" cy="526" r="5" />
-        <circle cx="628" cy="556" r="5" />
-        <circle cx="882" cy="638" r="5" />
-      </svg>
-    
-        <div class="canvas-title">
-          <div class="canvas-eyebrow">INFINITE CANVAS</div>
-          <div class="canvas-heading">深色无限画布</div>
-          <div class="canvas-copy">更像一张夜色中的调度台：黑、密、亮点少，但每个节点都有明确归属。</div>
-        </div>
-        <div class="node-cluster">
-          
-      <div class="node node-main">
-        <div class="node-top">
-          <span class="node-id">01</span>
-          <span class="node-tag">主任务</span>
-        </div>
-        <div class="node-title">生成未来的赛博朋克画面</div>
-        <div class="node-sub">人物 + 城市反光 + 霓虹</div>
-      </div>
-      <div class="node node-secondary">
-        <div class="node-top">
-          <span class="node-id">02</span>
-          <span class="node-tag">参考图</span>
-        </div>
-        <div class="node-title">语义约束</div>
-        <div class="node-sub">高层级、强对比、稀疏高亮</div>
-      </div>
-      <div class="node node-tertiary">
-        <div class="node-top">
-          <span class="node-id">03</span>
-          <span class="node-tag">输出</span>
-        </div>
-        <div class="node-title">3 张候选</div>
-        <div class="node-sub">保留多样性</div>
-      </div>
-      <div class="node node-pulse">
-        <div class="node-top">
-          <span class="node-id">04</span>
-          <span class="node-tag">选中</span>
-        </div>
-        <div class="node-title">发光锚点</div>
-        <div class="node-sub">当前焦点高亮</div>
-      </div>
-    
-        </div>
-        
-    <section class="panel panel-rail" style="left: 72px; top: 150px; width: 350px; height: 615px;">
-      <div class="panel-head">
+    <section class="compare-panel compare-panel-a">
+      <div class="compare-caption">
         <div>
-          <div class="eyebrow">PROMPT RAIL</div>
-          <h2>任务输入</h2>
+          <div class="compare-label">A / 深色工作台</div>
+          <div class="compare-sub">深色、浮层、连线更强</div>
         </div>
-        <div class="badge">深色</div>
+        <div class="compare-mini">推荐方向</div>
       </div>
-      <p class="panel-body">生成未来的赛博朋克画面，带人物、城市反光、稀疏霓虹，像一张被精密组织过的视觉网络。</p>
-      <div class="meta-grid ">
-        
-      <div class="meta-box">
-        <div class="meta-k">来源</div>
-        <div class="meta-v">参考图 + 文本</div>
+      <div class="compare-viewport">
+        <img class="compare-image" src="./cherry-ai-scheme-a.png" alt="A / 深色工作台" />
       </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">风格</div>
-        <div class="meta-v">深色高对比</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">输出</div>
-        <div class="meta-v">3 张</div>
-      </div>
-    
-      </div>
-      <div class="chip-row ">
-        
-      <span class="chip ">参考图 02</span>
-    
-      <span class="chip ">约束强</span>
-    
-      <span class="chip ">可追踪</span>
-    
+      <div class="compare-footer">
+        <span class="compare-chip compare-chip-strong">深色工作台</span><span class="compare-chip">关系连线</span><span class="compare-chip">高层级</span>
       </div>
     </section>
   
-    <section class="panel panel-core panel-selected" style="left: 505px; top: 140px; width: 575px; height: 350px;">
-      <div class="panel-head">
+        
+    <section class="compare-panel compare-panel-b">
+      <div class="compare-caption">
         <div>
-          <div class="eyebrow">CANVAS CORE</div>
-          <h2>关系图谱</h2>
+          <div class="compare-label">B / 轻简视图</div>
+          <div class="compare-sub">更轻、更简、更留白</div>
         </div>
-        <div class="badge">深色</div>
+        <div class="compare-mini">对照方案</div>
       </div>
-      <p class="panel-body">节点按层级展开，主任务、参考图、分支结果和细化输出通过连线形成稳定的阅读路径。</p>
-      <div class="meta-grid ">
-        
-      <div class="meta-box">
-        <div class="meta-k">节点</div>
-        <div class="meta-v">12</div>
+      <div class="compare-viewport">
+        <img class="compare-image" src="./cherry-ai-scheme-b.png" alt="B / 轻简视图" />
       </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">连线</div>
-        <div class="meta-v">18</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">选中</div>
-        <div class="meta-v">1</div>
-      </div>
-    
-      </div>
-      <div class="chip-row ">
-        
-      <span class="chip chip-strong">层级强</span>
-    
-      <span class="chip ">连线密</span>
-    
-      <span class="chip ">可拖拽</span>
-    
+      <div class="compare-footer">
+        <span class="compare-chip compare-chip-soft">轻简视图</span><span class="compare-chip">低噪声</span><span class="compare-chip">更留白</span>
       </div>
     </section>
   
-    <section class="panel panel-inspector" style="left: 1128px; top: 120px; width: 340px; height: 248px;">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">DETAIL INSPECTOR</div>
-          <h2>输出详情</h2>
-        </div>
-        <div class="badge">深色</div>
-      </div>
-      <p class="panel-body">选中卡片拉高、放大、发光，作为视觉锚点，让用户一眼知道当前焦点。</p>
-      <div class="meta-grid meta-grid-tight">
-        
-      <div class="meta-box">
-        <div class="meta-k">状态</div>
-        <div class="meta-v">完成</div>
-      </div>
+      </main>
     
-      <div class="meta-box">
-        <div class="meta-k">时长</div>
-        <div class="meta-v">01:16</div>
-      </div>
-    
-      </div>
-      <div class="chip-row chip-row-tight">
-        
-      <span class="chip ">强锚点</span>
-    
-      <span class="chip ">浮层卡片</span>
-    
-      </div>
-    </section>
-  
-    <section class="panel panel-bottom" style="left: 865px; top: 502px; width: 480px; height: 220px;">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">OUTPUT QUEUE</div>
-          <h2>输出队列</h2>
-        </div>
-        <div class="badge">深色</div>
-      </div>
-      <p class="panel-body">底部保持低饱和信息条，辅助查看批量输出但不抢占主视觉。</p>
-      <div class="meta-grid meta-grid-tight">
-        
-      <div class="meta-box">
-        <div class="meta-k">第 1 轮</div>
-        <div class="meta-v">3 张</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">筛选</div>
-        <div class="meta-v">未应用</div>
-      </div>
-    
-      <div class="meta-box">
-        <div class="meta-k">复用</div>
-        <div class="meta-v">可用</div>
-      </div>
-    
-      </div>
-      <div class="chip-row chip-row-tight">
-        
-      <span class="chip ">轻提示</span>
-    
-      <span class="chip ">不打断</span>
-    
-      <span class="chip ">可继续</span>
-    
-      </div>
-    </section>
-  
-        <div class="floating-pills ">
-          <span class="float-pill">拖拽排布</span>
-          <span class="float-pill">连接关系</span>
-          <span class="float-pill">输出分组</span>
-          <span class="float-pill">无限延展</span>
-        </div>
-        <div class="output-rail">
-          
-    <article class="output-card output-blue" style="animation-delay:0s">
-      <div class="output-index">1</div>
-      <div class="output-copy">
-        <div class="output-title">输出 01</div>
-        <div class="output-ratio">1:1</div>
-      </div>
-      <div class="output-preview">
-        <span class="output-dot"></span>
-        <span class="output-line"></span>
-      </div>
-    </article>
-  
-    <article class="output-card output-violet" style="animation-delay:0.08s">
-      <div class="output-index">2</div>
-      <div class="output-copy">
-        <div class="output-title">输出 02</div>
-        <div class="output-ratio">4:5</div>
-      </div>
-      <div class="output-preview">
-        <span class="output-dot"></span>
-        <span class="output-line"></span>
-      </div>
-    </article>
-  
-    <article class="output-card output-pink" style="animation-delay:0.16s">
-      <div class="output-index">3</div>
-      <div class="output-copy">
-        <div class="output-title">输出 03</div>
-        <div class="output-ratio">16:9</div>
-      </div>
-      <div class="output-preview">
-        <span class="output-dot"></span>
-        <span class="output-line"></span>
-      </div>
-    </article>
-  
-        </div>
-        <div class="edge-hint edge-left"></div>
-        <div class="edge-hint edge-right"></div>
-      </div>
-    </div>
-  
 </body>
 </html>
