@@ -3,7 +3,8 @@ import { Handle, Position, useViewport, type Node, type NodeProps } from '@xyflo
 import type { CanvasGraphNodeData } from '../lib/canvasGraph'
 import { buildCanvasNodeViewModel } from '../lib/canvasNodeViewModel'
 import { formatImageRatio } from '../lib/size'
-import { ensureImageThumbnailCached, subscribeImageThumbnail } from '../store'
+import { ensureImageThumbnailCached, subscribeImageThumbnail, useStore } from '../store'
+import { Checkbox } from './Checkbox'
 import { CodeIcon, TransparentBgIcon } from './icons'
 
 type Thumbnail = {
@@ -72,6 +73,7 @@ function CanvasNode({ data, selected }: NodeProps<CanvasTaskNode>) {
   const { zoom } = useViewport()
   const isCompact = zoom < 0.62
   const task = data.task as CanvasGraphNodeData['task']
+  const toggleTaskSelection = useStore((s) => s.toggleTaskSelection)
   const viewModel = useMemo(() => buildCanvasNodeViewModel(task), [task])
   const inputThumbnails = useThumbnailMap(task.inputImageIds ?? [])
   const outputThumbnails = useThumbnailMap(task.outputImages ?? [])
@@ -80,6 +82,7 @@ function CanvasNode({ data, selected }: NodeProps<CanvasTaskNode>) {
   return (
     <div
       data-canvas-task-node
+      data-task-id={task.id}
       className={`canvas-task-node group relative overflow-hidden rounded-[28px] border shadow-[0_26px_90px_rgba(0,0,0,0.45)] transition-all duration-200 ${
         selected
           ? 'border-sky-400/60 ring-1 ring-sky-400/50 shadow-[0_32px_120px_rgba(14,165,233,0.18)]'
@@ -96,7 +99,21 @@ function CanvasNode({ data, selected }: NodeProps<CanvasTaskNode>) {
 
       <div className="canvas-task-drag-handle border-b border-white/8 px-4 py-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="pt-0.5">
+              <div
+                className="nodrag nopan rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5 transition hover:border-white/15 hover:bg-white/[0.06]"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <Checkbox
+                  checked={selected}
+                  onChange={(checked) => toggleTaskSelection(task.id, checked)}
+                  aria-label={selected ? '取消选择任务' : '选择任务'}
+                />
+              </div>
+            </div>
+            <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.28em] text-slate-400">
               <span>{viewModel.statusLabel}</span>
               <span className="text-slate-600">/</span>
@@ -113,6 +130,7 @@ function CanvasNode({ data, selected }: NodeProps<CanvasTaskNode>) {
                 <p className="line-clamp-1 text-xs text-slate-400">{viewModel.requestedModel}</p>
               </div>
             </div>
+          </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {task.maskImageId && (

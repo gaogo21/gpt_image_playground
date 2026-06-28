@@ -2128,7 +2128,8 @@ export default function InputBar() {
   )
 
   const showFavoriteCollectionBatchBar = inCollectionOverview && selectedFavoriteCollectionIds.length > 0
-  const showTaskBatchBar = !showFavoriteCollectionBatchBar && selectedTaskIds.length > 0
+  const suppressCanvasSingleTaskBatchBar = appMode === 'canvas' && selectedTaskIds.length === 1
+  const showTaskBatchBar = !showFavoriteCollectionBatchBar && selectedTaskIds.length > 0 && !suppressCanvasSingleTaskBatchBar
 
   return (
     <>

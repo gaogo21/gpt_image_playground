@@ -227,6 +227,48 @@ describe('favorite collection deletion', () => {
   })
 })
 
+describe('task selection invariants', () => {
+  beforeEach(() => {
+    useStore.setState({
+      tasks: [],
+      selectedTaskIds: [],
+    })
+  })
+
+  it('dedupes and prunes selected ids against current tasks', () => {
+    const first = task({ id: 'task-1' })
+    const second = task({ id: 'task-2' })
+    useStore.setState({ tasks: [first, second] })
+
+    useStore.getState().setSelectedTaskIds(['task-2', 'missing-task', 'task-1', 'task-2'])
+
+    expect(useStore.getState().selectedTaskIds).toEqual(['task-2', 'task-1'])
+  })
+
+  it('prunes selection when the task list changes', () => {
+    const first = task({ id: 'task-1' })
+    const second = task({ id: 'task-2' })
+    const third = task({ id: 'task-3' })
+    useStore.setState({
+      tasks: [first, second, third],
+      selectedTaskIds: ['task-3', 'task-1'],
+    })
+
+    useStore.getState().setTasks([second, third])
+
+    expect(useStore.getState().selectedTaskIds).toEqual(['task-3'])
+  })
+
+  it('ignores attempts to select tasks that are no longer present', () => {
+    const first = task({ id: 'task-1' })
+    useStore.setState({ tasks: [first] })
+
+    useStore.getState().toggleTaskSelection('missing-task', true)
+
+    expect(useStore.getState().selectedTaskIds).toEqual([])
+  })
+})
+
 describe('mask draft lifecycle in store actions', () => {
   beforeEach(() => {
     useStore.setState({

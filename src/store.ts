@@ -351,6 +351,31 @@ function countSuccessfulOutputImages(tasks: TaskRecord[]) {
   return tasks.reduce((count, task) => count + (task.status === 'done' && !isAgentTask(task) ? task.outputImages.length : 0), 0)
 }
 
+function pruneSelectedTaskIds(selectedTaskIds: string[], tasks: TaskRecord[]) {
+  if (selectedTaskIds.length === 0) return selectedTaskIds
+
+  const taskIds = new Set(tasks.map((task) => task.id))
+  const seen = new Set<string>()
+  const next = selectedTaskIds.filter((id) => {
+    if (!taskIds.has(id) || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })
+
+  if (next.length === selectedTaskIds.length) return selectedTaskIds
+  return next
+}
+
+function pruneSelectionAfterTaskRemoval(removedTaskIds: string[]) {
+  if (removedTaskIds.length === 0) return
+
+  const removedIds = new Set(removedTaskIds)
+  const state = useStore.getState()
+  const nextSelectedTaskIds = state.selectedTaskIds.filter((id) => !removedIds.has(id))
+  if (nextSelectedTaskIds.length === state.selectedTaskIds.length) return
+  state.setSelectedTaskIds(nextSelectedTaskIds)
+}
+
 function skipSupportPromptForImportedData(tasks: TaskRecord[]) {
   const count = countSuccessfulOutputImages(tasks)
   useStore.setState((state) => {
@@ -1470,8 +1495,9 @@ export const useStore = create<AppState>()(
 
       // Tasks
       tasks: [],
-      setTasks: (tasks) => set(() => ({
+      setTasks: (tasks) => set((state) => ({
         tasks,
+        selectedTaskIds: pruneSelectedTaskIds(state.selectedTaskIds, tasks),
         ...(countSuccessfulOutputImages(tasks) <= SUPPORT_PROMPT_IMAGE_THRESHOLD
           ? { supportPromptSkippedForImportedData: false }
           : {}),
@@ -1536,13 +1562,15 @@ export const useStore = create<AppState>()(
 
       // Selection
       selectedTaskIds: [],
-      setSelectedTaskIds: (updater) => set((s) => ({
-        selectedTaskIds: typeof updater === 'function' ? updater(s.selectedTaskIds) : updater
-      })),
+      setSelectedTaskIds: (updater) => set((state) => {
+        const next = typeof updater === 'function' ? updater(state.selectedTaskIds) : updater
+        return { selectedTaskIds: pruneSelectedTaskIds(Array.from(new Set(next)), state.tasks) }
+      }),
       toggleTaskSelection: (id, force) => set((s) => {
         const isSelected = s.selectedTaskIds.includes(id)
         const shouldSelect = force !== undefined ? force : !isSelected
         if (shouldSelect === isSelected) return s
+        if (shouldSelect && !s.tasks.some((task) => task.id === id)) return s
         return {
           selectedTaskIds: shouldSelect
             ? [...s.selectedTaskIds, id]
@@ -4710,6 +4738,7 @@ export async function removeTask(task: TaskRecord) {
   const remaining = await scrubAgentOutputPayloadsForDeletedTasks([task], tasks.filter((t) => t.id !== task.id))
   setTasks(remaining)
   await dbDeleteTask(task.id)
+  pruneSelectionAfterTaskRemoval([task.id])
 
   // 找出其他任务仍引用的图片
   const stillUsed = new Set<string>()
