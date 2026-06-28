@@ -483,18 +483,43 @@ export default function TaskCard({
           )}
           {task.status === 'done' && thumbSrc && (
             <>
-              <img
-                src={thumbSrc}
-                data-image-id={task.outputImages[0]}
-                data-output-image-ids={task.outputImages.join(',')}
-                className="saveable-image w-full h-full object-cover"
-                loading="lazy"
-                alt=""
-              />
-              {(hasPartialOutputFailure || task.outputImages.length > 1) && (
-                <span className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
-                  {hasPartialOutputFailure ? <>{requestedOutputCount} | <span className="font-semibold text-yellow-300">{outputSuccessCount}</span></> : task.outputImages.length}
-                </span>
+              {task.mediaType === 'video' ? (
+                // 视频：显示缩略图 + 播放图标
+                <div className="relative w-full h-full">
+                  <img
+                    src={thumbSrc}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    alt=""
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <svg className="w-12 h-12 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                  {task.videoDuration && (
+                    <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded font-mono">
+                      {Math.floor(task.videoDuration)}s
+                    </span>
+                  )}
+                </div>
+              ) : (
+                // 图片：现有逻辑
+                <>
+                  <img
+                    src={thumbSrc}
+                    data-image-id={task.outputImages[0]}
+                    data-output-image-ids={task.outputImages.join(',')}
+                    className="saveable-image w-full h-full object-cover"
+                    loading="lazy"
+                    alt=""
+                  />
+                  {(hasPartialOutputFailure || task.outputImages.length > 1) && (
+                    <span className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                      {hasPartialOutputFailure ? <>{requestedOutputCount} | <span className="font-semibold text-yellow-300">{outputSuccessCount}</span></> : task.outputImages.length}
+                    </span>
+                  )}
+                </>
               )}
             </>
           )}
@@ -513,16 +538,27 @@ export default function TaskCard({
               />
             </svg>
           )}
-          {/* 运行中显示耗时，完成后显示封面图比例与分辨率标签 */}
+          {/* 运行中显示耗时，完成后显示封面图比例与分辨率标签（视频显示时长和宽高比） */}
           <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
-            {showRunningTimer || task.status !== 'done' || !coverRatio || !coverSize ? (
+            {showRunningTimer || task.status !== 'done' ? (
               <span className="flex items-center gap-1 bg-black/50 text-white text-[10px] sm:text-xs px-1.5 py-0.5 rounded backdrop-blur-sm font-mono">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {duration}
               </span>
-            ) : (
+            ) : task.mediaType === 'video' && task.videoAspectRatio ? (
+              <>
+                <span className="bg-black/50 text-white text-[10px] sm:text-xs px-1.5 py-0.5 rounded backdrop-blur-sm font-mono">
+                  {task.videoAspectRatio}
+                </span>
+                {task.videoDuration && (
+                  <span className="bg-black/50 text-white/90 text-[10px] sm:text-xs px-1.5 py-0.5 rounded backdrop-blur-sm font-medium">
+                    {Math.floor(task.videoDuration)}s
+                  </span>
+                )}
+              </>
+            ) : coverRatio && coverSize ? (
               <>
                 <span className="bg-black/50 text-white text-[10px] sm:text-xs px-1.5 py-0.5 rounded backdrop-blur-sm font-mono">
                   {coverRatio}
@@ -531,7 +567,7 @@ export default function TaskCard({
                   {coverSize}
                 </span>
               </>
-            )}
+            ) : null}
           </div>
         </div>
 
