@@ -368,7 +368,7 @@ export function switchApiProfileProvider(profile: ApiProfile, provider: ApiProvi
     return {
       ...profile,
       provider: customProvider.id,
-      baseUrl: savedDraft?.baseUrl ?? (shouldUseOpenAIDefaults ? DEFAULT_BASE_URL : profile.baseUrl || DEFAULT_BASE_URL),
+      baseUrl: savedDraft?.baseUrl ?? (shouldUseOpenAIDefaults ? DEFAULT_SETTINGS.baseUrl : profile.baseUrl || DEFAULT_BASE_URL),
       model: savedDraft?.model ?? (shouldUseOpenAIDefaults ? DEFAULT_IMAGES_MODEL : profile.model || DEFAULT_IMAGES_MODEL),
       apiMode: 'images',
       codexCli: false,
@@ -654,11 +654,8 @@ function isDefaultOpenAIProfile(profile: ApiProfile): boolean {
     profile.streamPartialImages === DEFAULT_STREAM_PARTIAL_IMAGES
 }
 
-function hasOnlyDefaultProfiles(settings: AppSettings): boolean {
-  return settings.customProviders.length === 0 &&
-    settings.profiles.length === 1 &&
-    settings.activeProfileId === DEFAULT_OPENAI_PROFILE_ID &&
-    isDefaultOpenAIProfile(settings.profiles[0])
+function isPristineDefaultSettings(settings: AppSettings): boolean {
+  return JSON.stringify(settings) === JSON.stringify(DEFAULT_SETTINGS)
 }
 
 function createImportedProfileId(provider: ApiProvider, usedIds: Set<string>): string {
@@ -771,7 +768,7 @@ export function mergeImportedSettings(currentSettings: Partial<AppSettings> | un
     profiles: dedupeApiProfiles(normalizedImported.profiles),
   })
 
-  if (hasOnlyDefaultProfiles(current)) {
+  if (isPristineDefaultSettings(current)) {
     return imported
   }
 
