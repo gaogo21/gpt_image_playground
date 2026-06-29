@@ -28,6 +28,7 @@ import CanvasNode from './CanvasNode'
 import { ChevronLeftIcon, ChevronRightIcon, EditIcon, FavoriteIcon, RefreshIcon, TrashIcon } from './icons'
 
 type CanvasNodeType = Node<CanvasGraphNodeData, 'canvasTask'>
+const DEFAULT_CANVAS_VIEWPORT = { x: 0, y: 0, zoom: 0.1 }
 
 function getCanvasLayoutStorage() {
   if (typeof window === 'undefined') return null
@@ -395,8 +396,8 @@ function CanvasWorkspaceSurface() {
           onNodeClick={handleNodeClick}
           onNodeDragStop={handleNodeDragStop}
           onPaneClick={handlePaneClick}
-          fitView
-          fitViewOptions={{ padding: 0.18, minZoom: 0.2, maxZoom: 1.2 }}
+          defaultViewport={DEFAULT_CANVAS_VIEWPORT}
+          minZoom={0.1}
           nodesDraggable={hasGraph}
           nodesConnectable={false}
           elementsSelectable={false}
