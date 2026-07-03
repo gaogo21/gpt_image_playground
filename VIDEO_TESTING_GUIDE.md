@@ -44,7 +44,7 @@
 }
 ```
 
-5. 在 **Base URL** 中填入你的 API 地址（如 `https://zz1cc.cc.cd`）
+5. 在 **Base URL** 中填入你的 API 地址（如 `https://gptch.cloud`）
 6. 在 **API Key** 中填入你的密钥
 7. 点击 **保存**
 
@@ -55,7 +55,7 @@
 3. 填写：
    - **名称**: "视频生成测试"
    - **Provider**: 选择刚才添加的 "视频生成 DS 2.0"
-   - **Base URL**: `https://zz1cc.cc.cd`（或你的 API 地址）
+   - **Base URL**: `https://gptch.cloud`（或你的 API 地址）
    - **API Key**: 你的密钥
 4. 点击 **保存**
 5. 将这个配置设为 **活动配置**

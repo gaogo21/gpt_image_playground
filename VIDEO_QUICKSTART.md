@@ -20,7 +20,7 @@
 4. 填写：
    - **名称**: `视频生成`
    - **Provider**: 选择 `视频生成 DS 2.0` （已预配置✅）
-   - **Base URL**: `https://zz1cc.cc.cd`
+   - **Base URL**: `https://gptch.cloud`
    - **API Key**: 填入你的密钥
    - **Model**: `video-ds-2.0-fast`（或留空使用默认）
 5. 点击 **保存**

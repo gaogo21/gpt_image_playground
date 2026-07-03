@@ -841,7 +841,7 @@ export const DEFAULT_SETTINGS: AppSettings = normalizeSettings({
       id: 'video-ds-2.0-profile',
       name: '视频生成 DS 2.0',
       provider: 'video-ds-2.0',
-      baseUrl: 'https://zz1cc.cc.cd',
+      baseUrl: 'https://gptch.cloud',
       apiKey: '',
       model: 'video-ds-2.0-fast',
       timeout: 120000,

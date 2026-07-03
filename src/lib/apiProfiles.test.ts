@@ -21,6 +21,15 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
+describe('DEFAULT_SETTINGS', () => {
+  it('uses gptch.cloud for the built-in video profile', () => {
+    expect(DEFAULT_SETTINGS.profiles[0]).toMatchObject({
+      id: 'video-ds-2.0-profile',
+      baseUrl: 'https://gptch.cloud',
+    })
+  })
+})
+
 describe('validateApiProfile', () => {
   it('allows empty API URL when API proxy is enabled and available', () => {
     vi.stubEnv('VITE_API_PROXY_AVAILABLE', 'true')

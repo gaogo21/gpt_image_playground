@@ -24,7 +24,7 @@
 │  │  视频生成 DS 2.0  [http-video]  ▼│   │ ← 选择这个
 │  └──────────────────────────────────┘   │
 │                                          │
-│  Base URL: https://zz1cc.cc.cd          │ ← 已预设✅
+│  Base URL: https://gptch.cloud          │ ← 已预设✅
 │  API Key:  ┌──────────────────────┐     │
 │            │ sk-xxxxxxxxxxxxxxxx  │     │ ← 填这里
 │            └──────────────────────┘     │
