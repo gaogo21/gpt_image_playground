@@ -31,6 +31,43 @@ export const DEFAULT_FAL_BASE_URL = 'https://fal.run'
 export const DEFAULT_FAL_MODEL = 'openai/gpt-image-2'
 export const DEFAULT_OPENAI_PROFILE_ID = 'default-openai'
 export const DEFAULT_API_TIMEOUT = 600
+export const LOCKED_IMAGE_RELAY_PROVIDER_ID = 'artworkers-async-image'
+export const LOCKED_IMAGE_RELAY_PROFILE_NAME = '文生图'
+export const LOCKED_IMAGE_RELAY_BASE_URL = 'http://localhost:3000'
+export const LOCKED_IMAGE_RELAY_TIMEOUT = 9000
+
+const LOCKED_IMAGE_RELAY_PROVIDER: CustomProviderDefinition = {
+  id: LOCKED_IMAGE_RELAY_PROVIDER_ID,
+  name: '本地异步生图',
+  template: 'http-image',
+  submit: {
+    path: 'images/generations/async',
+    method: 'POST',
+    contentType: 'json',
+    body: {
+      model: '$profile.model',
+      prompt: '$prompt',
+      size: '$params.size',
+      quality: '$params.quality',
+      n: '$params.n',
+      response_format: 'b64_json',
+    },
+    taskIdPath: 'data.task_id',
+  },
+  poll: {
+    path: 'images/tasks/{task_id}',
+    method: 'GET',
+    intervalSeconds: 3,
+    statusPath: 'data.status',
+    successValues: ['success'],
+    failureValues: ['failure'],
+    errorPath: 'data.fail_reason',
+    result: {
+      imageUrlPaths: [],
+      b64JsonPaths: ['data.result.data.*.b64_json'],
+    },
+  },
+}
 
 const BUILT_IN_PROVIDER_IDS = new Set<ApiProvider>(['openai', 'fal'])
 const DEFAULT_CUSTOM_PROVIDER_PATHS = {
@@ -482,28 +519,34 @@ function validateImportedProfileRecord(input: unknown) {
 
 export function normalizeSettings(input: Partial<AppSettings> | unknown): AppSettings {
   const record = input && typeof input === 'object' ? input as Record<string, unknown> : {}
-  const customProviders = normalizeCustomProviderDefinitions(record.customProviders)
+  const customProviders = [
+    LOCKED_IMAGE_RELAY_PROVIDER,
+    ...normalizeCustomProviderDefinitions(record.customProviders).filter((provider) => provider.id !== LOCKED_IMAGE_RELAY_PROVIDER_ID),
+  ]
   const customProviderIds = new Set(customProviders.map((provider) => provider.id))
-  const legacyApiMode: ApiMode = record.apiMode === 'responses' ? 'responses' : 'images'
-  const legacyProfile = createDefaultOpenAIProfile({
-    baseUrl: typeof record.baseUrl === 'string' ? record.baseUrl : DEFAULT_BASE_URL,
-    apiKey: typeof record.apiKey === 'string' ? record.apiKey : '',
-    model: typeof record.model === 'string' && record.model.trim() ? record.model : DEFAULT_IMAGES_MODEL,
-    timeout: typeof record.timeout === 'number' && Number.isFinite(record.timeout) ? record.timeout : DEFAULT_API_TIMEOUT,
-    apiMode: legacyApiMode,
-    codexCli: Boolean(record.codexCli),
-    apiProxy: typeof record.apiProxy === 'boolean' ? record.apiProxy : DEFAULT_OPENAI_API_PROXY,
-    responseFormatB64Json: record.responseFormatB64Json === true ? true : undefined,
-    streamImages: typeof record.streamImages === 'boolean' ? record.streamImages : undefined,
-    streamPartialImages: normalizeStreamPartialImages(record.streamPartialImages),
-  })
-  const profiles = Array.isArray(record.profiles) && record.profiles.length
-    ? record.profiles.map((profile) => normalizeApiProfile(profile, undefined, customProviderIds))
-    : [legacyProfile]
-  const activeProfileId = typeof record.activeProfileId === 'string' && profiles.some((p) => p.id === record.activeProfileId)
-    ? record.activeProfileId
-    : profiles[0].id
-  const active = profiles.find((p) => p.id === activeProfileId) ?? profiles[0]
+  const inputProfiles = Array.isArray(record.profiles) ? record.profiles as Array<Record<string, unknown>> : []
+  const existingActiveProfileId = typeof record.activeProfileId === 'string' ? record.activeProfileId : ''
+  const existingActiveProfile = inputProfiles.find((profile) => profile.id === existingActiveProfileId) ?? inputProfiles[0]
+  const legacyApiKey = typeof record.apiKey === 'string' ? record.apiKey : ''
+  const apiKey = legacyApiKey || (typeof existingActiveProfile?.apiKey === 'string' ? existingActiveProfile.apiKey : '')
+  const lockedProfile = normalizeApiProfile({
+    id: DEFAULT_OPENAI_PROFILE_ID,
+    name: LOCKED_IMAGE_RELAY_PROFILE_NAME,
+    provider: LOCKED_IMAGE_RELAY_PROVIDER_ID,
+    baseUrl: LOCKED_IMAGE_RELAY_BASE_URL,
+    apiKey,
+    model: DEFAULT_IMAGES_MODEL,
+    timeout: LOCKED_IMAGE_RELAY_TIMEOUT,
+    apiMode: 'images',
+    codexCli: false,
+    apiProxy: false,
+    responseFormatB64Json: true,
+    streamImages: false,
+    streamPartialImages: DEFAULT_STREAM_PARTIAL_IMAGES,
+  }, undefined, customProviderIds)
+  const profiles = [lockedProfile]
+  const activeProfileId = lockedProfile.id
+  const active = lockedProfile
 
   return {
     baseUrl: active.baseUrl,
@@ -613,21 +656,10 @@ export function getActiveApiProfile(settings: Partial<AppSettings> | unknown): A
   const record = settings && typeof settings === 'object' ? settings as Record<string, unknown> : {}
   const normalized = normalizeSettings(settings)
   const profile = normalized.profiles.find((p) => p.id === normalized.activeProfileId) ?? normalized.profiles[0] ?? createDefaultOpenAIProfile()
-  const apiMode = profile.provider === 'openai' && (record.apiMode === 'images' || record.apiMode === 'responses')
-    ? record.apiMode
-    : profile.apiMode
 
   return {
     ...profile,
-    baseUrl: typeof record.baseUrl === 'string' ? record.baseUrl : profile.baseUrl,
     apiKey: typeof record.apiKey === 'string' ? record.apiKey : profile.apiKey,
-    model: typeof record.model === 'string' && record.model.trim() ? record.model : profile.model,
-    timeout: typeof record.timeout === 'number' && Number.isFinite(record.timeout) ? record.timeout : profile.timeout,
-    apiMode,
-    codexCli: typeof record.codexCli === 'boolean' ? record.codexCli : profile.codexCli,
-    apiProxy: typeof record.apiProxy === 'boolean' ? record.apiProxy : profile.apiProxy,
-    streamImages: profile.provider === 'openai' && typeof record.streamImages === 'boolean' ? record.streamImages : profile.streamImages,
-    streamPartialImages: normalizeStreamPartialImages(record.streamPartialImages, profile.streamPartialImages),
   }
 }
 
