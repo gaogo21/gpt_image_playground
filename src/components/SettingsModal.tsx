@@ -642,10 +642,14 @@ export default function SettingsModal() {
     Object.prototype.hasOwnProperty.call(patch, 'apiKey') ? { apiKey: patch.apiKey ?? '' } : {}
   )
 
-  const getDraftWithActiveProfilePatch = (patch: Partial<ApiProfile>) => ({
+  const getDraftWithActiveProfilePatch = (patch: Partial<ApiProfile>) => {
+    const safePatch = getApiKeyOnlyPatch(patch)
+    return {
       ...draft,
-      profiles: draft.profiles.map((profile) => profile.id === activeProfile.id ? { ...profile, ...getApiKeyOnlyPatch(patch) } : profile),
-    })
+      ...('apiKey' in safePatch ? { apiKey: safePatch.apiKey ?? '' } : {}),
+      profiles: draft.profiles.map((profile) => profile.id === activeProfile.id ? { ...profile, ...safePatch } : profile),
+    }
+  }
 
   const updateActiveProfile = (patch: Partial<ApiProfile>, commit = false) => {
     const safePatch = getApiKeyOnlyPatch(patch)

@@ -54,6 +54,26 @@ const LOCKED_IMAGE_RELAY_PROVIDER: CustomProviderDefinition = {
     },
     taskIdPath: 'data.task_id',
   },
+  editSubmit: {
+    path: 'images/edits',
+    method: 'POST',
+    contentType: 'multipart',
+    body: {
+      model: '$profile.model',
+      prompt: '$prompt',
+      size: '$params.size',
+      n: '$params.n',
+      response_format: 'b64_json',
+    },
+    files: [
+      { field: 'image', source: 'inputImages', array: true },
+      { field: 'mask', source: 'mask' },
+    ],
+    result: {
+      imageUrlPaths: ['data.*.url'],
+      b64JsonPaths: ['data.*.b64_json'],
+    },
+  },
   poll: {
     path: 'images/tasks/{task_id}',
     method: 'GET',

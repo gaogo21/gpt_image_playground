@@ -315,6 +315,7 @@ export default function TaskCard({
   const outputSuccessCount = task.outputImages?.length ?? 0
   const requestedOutputCount = Math.max(task.params.n, outputSuccessCount + outputErrorCount)
   const hasPartialOutputFailure = task.status === 'done' && outputErrorCount > 0
+  const taskModeLabel = task.inputImageIds.length > 0 ? '图生图' : '文生图'
 
   const defaultModelForProvider = task.apiProvider === 'fal' ? DEFAULT_FAL_MODEL : DEFAULT_IMAGES_MODEL
   const showModel = task.apiModel && task.apiModel !== defaultModelForProvider
@@ -591,11 +592,11 @@ export default function TaskCard({
               {(task.apiProfileName || task.apiProvider) && (
                 <span 
                   className="workbench-chip flex-shrink-0 px-1.5 py-0.5 text-xs"
-                  title={task.apiProfileName || task.apiProvider}
+                  title={taskModeLabel}
                 >
                   <CodeIcon className="h-3 w-3 flex-shrink-0 text-[hsl(var(--wb-muted))]" />
                   <span className="truncate max-w-[8rem]">
-                    {task.apiProfileName || task.apiProvider}
+                    {taskModeLabel}
                   </span>
                 </span>
               )}
